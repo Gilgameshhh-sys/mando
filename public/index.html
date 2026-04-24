@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mando — El control remoto para tu operación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --ink:    #0a0c0f;
+  --ink2:   #131720;
+  --ink3:   #1c2230;
+  --paper:  #f5f2eb;
+  --paper2: #ede9df;
+  --green:  #00e676;
+  --green2: rgba(0,230,118,0.12);
+  --green3: rgba(0,230,118,0.06);
+  --amber:  #ffc107;
+  --red:    #ff3d3d;
+  --muted:  #4a5568;
+  --muted2: #8896aa;
+  --border: rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --mono:   'Space Mono', monospace;
+  --sans:   'Barlow', sans-serif;
+  --cond:   'Barlow Condensed', sans-serif;
+}
+body{font-family:var(--sans);background:var(--ink);color:var(--paper);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+::selection{background:var(--green);color:#000}
+
+/* ── SCANLINE overlay ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:999;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.015) 2px,rgba(0,0,0,0.015) 4px);
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 5vw;
+  border-bottom:1px solid var(--border);
+  background:rgba(10,12,15,0.93);
+  backdrop-filter:blur(10px);
+}
+.logo{
+  font-family:var(--cond);font-weight:800;font-size:1.5rem;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:#fff;
+}
+.logo span{color:var(--green)}
+.logo-tag{
+  font-family:var(--mono);font-size:0.58rem;color:var(--muted2);
+  display:block;letter-spacing:0.12em;text-transform:uppercase;
+  margin-top:-2px;
+}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a{font-size:0.82rem;color:var(--muted2);letter-spacing:0.04em;font-weight:500;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--paper)}
+.nav-cta{display:flex;gap:.75rem;align-items:center}
+.btn-ghost-sm{font-size:0.8rem;color:var(--muted2);padding:.4rem .9rem;border:1px solid rgba(255,255,255,.1);border-radius:3px;letter-spacing:.04em;font-weight:500;text-transform:uppercase;transition:all .2s}
+.btn-ghost-sm:hover{border-color:var(--green);color:var(--green)}
+.btn-main-sm{
+  font-family:var(--cond);font-weight:700;font-size:0.85rem;
+  letter-spacing:0.08em;text-transform:uppercase;
+  background:var(--green);color:#000;
+  padding:.45rem 1.2rem;border-radius:3px;
+  transition:all .2s;border:none;cursor:pointer;
+}
+.btn-main-sm:hover{background:#2df082;transform:translateY(-1px)}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;align-items:center;
+  padding:8rem 5vw 5rem;
+  position:relative;overflow:hidden;
+}
+.hero-noise{
+  position:absolute;inset:0;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size:256px;opacity:.4;pointer-events:none;
+}
+.hero-grid-lines{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,230,118,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,230,118,.04) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+.hero-inner{
+  position:relative;z-index:10;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:5rem;align-items:center;width:100%;max-width:1300px;margin:0 auto;
+}
+.hero-left{}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:.68rem;color:var(--green);
+  letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid rgba(0,230,118,.25);
+  padding:.3rem .85rem;border-radius:2px;
+  margin-bottom:1.8rem;
+  background:var(--green3);
+  animation:fadein .6s ease both;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes fadein{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+h1{
+  font-family:var(--cond);
+  font-weight:800;
+  font-size:clamp(3rem,5.5vw,5rem);
+  line-height:.96;
+  letter-spacing:-0.01em;
+  text-transform:uppercase;
+  color:#fff;
+  margin-bottom:1.5rem;
+  animation:fadein .6s .08s ease both;
+}
+h1 .accent{color:var(--green)}
+h1 .line2{display:block;font-weight:300;font-style:italic;color:var(--paper2);font-family:var(--sans);text-transform:none;font-size:clamp(1.8rem,3.2vw,2.8rem);letter-spacing:-.01em;line-height:1.2;margin-top:.3rem}
+
+.hero-sub{
+  font-size:1.05rem;color:var(--muted2);line-height:1.75;
+  max-width:480px;font-weight:300;margin-bottom:2.5rem;
+  animation:fadein .6s .15s ease both;
+}
+.hero-sub strong{color:var(--paper);font-weight:500}
+
+.hero-btns{
+  display:flex;gap:1rem;flex-wrap:wrap;
+  animation:fadein .6s .22s ease both;
+}
+.btn-main{
+  font-family:var(--cond);font-weight:700;font-size:1rem;
+  letter-spacing:.1em;text-transform:uppercase;
+  background:var(--green);color:#000;
+  padding:.85rem 2rem;border-radius:3px;
+  transition:all .25s;border:none;cursor:pointer;
+  display:inline-block;
+}
+.btn-main:hover{background:#2df082;transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,230,118,.3)}
+.btn-outline{
+  font-family:var(--cond);font-weight:600;font-size:1rem;
+  letter-spacing:.08em;text-transform:uppercase;
+  background:transparent;color:var(--paper2);
+  padding:.85rem 2rem;border-radius:3px;
+  border:1px solid var(--border2);transition:all .2s;
+  display:inline-block;
+}
+.btn-outline:hover{border-color:rgba(0,230,118,.4);color:var(--green)}
+
+/* ── SMS TERMINAL ── */
+.hero-right{animation:fadein .6s .3s ease both}
+.terminal{
+  background:#0d1117;border:1px solid rgba(0,230,118,.2);
+  border-radius:6px;overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(0,230,118,.04),
+             0 0 60px rgba(0,230,118,.04);
+  font-family:var(--mono);
+}
+.term-bar{
+  background:#0a0e14;
+  padding:.75rem 1.1rem;
+  display:flex;align-items:center;gap:.5rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.td{width:10px;height:10px;border-radius:50%}
+.term-label{font-size:.65rem;color:var(--muted2);margin-left:.5rem;letter-spacing:.1em}
+.term-label span{color:var(--green)}
+.term-body{padding:1.5rem}
+.sms-thread{display:flex;flex-direction:column;gap:.9rem}
+.sms-out{
+  align-self:flex-end;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px 12px 3px 12px;
+  padding:.6rem 1rem;
+  max-width:88%;
+}
+.sms-in{
+  align-self:flex-start;
+  background:rgba(0,230,118,.1);
+  border:1px solid rgba(0,230,118,.2);
+  border-radius:12px 12px 12px 3px;
+  padding:.6rem 1rem;
+  max-width:88%;
+}
+.sms-cmd{font-size:.88rem;color:#fff;font-weight:700;letter-spacing:.04em}
+.sms-resp{font-size:.82rem;color:var(--paper2);line-height:1.55}
+.sms-resp b{color:var(--green)}
+.sms-resp .red{color:var(--red)}
+.sms-resp .amber{color:var(--amber)}
+.sms-meta{font-size:.6rem;color:var(--muted);text-align:right;margin-top:3px;opacity:.7}
+.from-label{font-size:.6rem;color:var(--muted2);margin-bottom:.2rem;letter-spacing:.06em;text-transform:uppercase}
+.typing{display:flex;align-items:center;gap:.35rem;padding:.6rem 1rem;background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);border-radius:12px;align-self:flex-start;margin-top:.2rem}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--green);animation:type-bounce .9s ease-in-out infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes type-bounce{0%,100%{opacity:.2;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+
+/* ── TAGLINE BAND ── */
+.tagline-band{
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  background:var(--ink2);
+  padding:1.5rem 0;overflow:hidden;
+}
+.marquee{display:flex;gap:4rem;width:max-content;animation:marquee 25s linear infinite}
+.marquee-item{
+  display:flex;align-items:center;gap:1rem;
+  font-family:var(--cond);font-weight:700;font-size:.9rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);
+  white-space:nowrap;
+}
+.marquee-sep{color:var(--green);font-size:1rem}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── COMANDOS SECTION ── */
+.section{padding:7rem 5vw;max-width:1300px;margin:0 auto}
+.sec-full{padding:7rem 5vw;background:var(--ink2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.sec-inner{max-width:1300px;margin:0 auto}
+.sec-tag{
+  font-family:var(--mono);font-size:.65rem;color:var(--green);
+  letter-spacing:.15em;text-transform:uppercase;
+  margin-bottom:1rem;display:flex;align-items:center;gap:.6rem;
+}
+.sec-tag::before{content:'//';color:var(--muted)}
+.sec-h{
+  font-family:var(--cond);font-weight:800;
+  font-size:clamp(2.2rem,3.8vw,3.2rem);
+  line-height:.98;letter-spacing:-.005em;
+  text-transform:uppercase;color:#fff;
+  margin-bottom:1rem;
+}
+.sec-h em{font-style:italic;font-family:var(--sans);text-transform:none;color:var(--paper2);font-weight:300}
+.sec-p{font-size:1rem;color:var(--muted2);line-height:1.8;max-width:480px;font-weight:300}
+
+/* Comandos grid */
+.cmd-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:6px;
+  overflow:hidden;margin-top:3.5rem;
+}
+.cmd-card{
+  background:var(--ink);padding:2rem;
+  position:relative;overflow:hidden;
+  transition:background .25s;cursor:default;
+}
+.cmd-card:hover{background:var(--ink2)}
+.cmd-card:hover .cmd-name{color:var(--green)}
+.cmd-name{
+  font-family:var(--mono);font-size:1.1rem;font-weight:700;
+  color:#fff;letter-spacing:.06em;
+  margin-bottom:.75rem;transition:color .2s;
+}
+.cmd-arg{color:var(--amber)}
+.cmd-desc{font-size:.85rem;color:var(--muted2);line-height:1.65;font-weight:300}
+.cmd-example{
+  margin-top:1rem;padding:.5rem .75rem;
+  background:var(--ink2);border-left:2px solid var(--green);
+  font-family:var(--mono);font-size:.72rem;color:var(--paper2);
+  border-radius:0 3px 3px 0;
+}
+.cmd-resp{font-size:.68rem;color:var(--muted2);margin-top:.25rem}
+.cmd-resp b{color:var(--green)}
+
+/* ── CÓMO FUNCIONA ── */
+.how-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+.flow-steps{display:flex;flex-direction:column;gap:0;margin-top:2.5rem}
+.flow-step{
+  display:grid;grid-template-columns:44px 1fr;
+  gap:1rem;padding:1.4rem 0;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+}
+.flow-step:last-child{border-bottom:none}
+.step-n{
+  font-family:var(--mono);font-size:.8rem;font-weight:700;
+  color:var(--muted);border:1px solid var(--border2);
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  border-radius:2px;margin-top:2px;flex-shrink:0;transition:all .2s;
+}
+.flow-step:hover .step-n,.flow-step.active .step-n{
+  background:var(--green);color:#000;border-color:var(--green);
+}
+.step-title{font-size:1rem;font-weight:600;color:#fff;margin-bottom:.3rem;letter-spacing:-.01em}
+.step-desc{font-size:.875rem;color:var(--muted2);line-height:1.65;font-weight:300}
+
+/* Flow diagram */
+.flow-diagram{
+  background:var(--ink2);border:1px solid var(--border);
+  border-radius:6px;padding:2rem;font-family:var(--mono);
+}
+.flow-title{font-size:.65rem;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:1.5rem}
+.flow-node{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.65rem .9rem;margin-bottom:.5rem;
+  border-radius:3px;font-size:.8rem;
+}
+.fn-sms{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.18);color:var(--green)}
+.fn-id{background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.18);color:var(--amber)}
+.fn-perm{background:rgba(255,61,61,.06);border:1px solid rgba(255,61,61,.18);color:var(--red)}
+.fn-exec{background:rgba(74,85,104,.2);border:1px solid rgba(255,255,255,.08);color:var(--paper2)}
+.fn-resp{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.18);color:var(--green)}
+.fn-log{background:rgba(74,85,104,.15);border:1px solid rgba(255,255,255,.06);color:var(--muted2)}
+.flow-arrow{text-align:center;color:var(--muted);font-size:.75rem;margin:.15rem 0 .15rem 1.6rem}
+
+/* ── VERTICAL SECTION ── */
+.vertical-card{
+  background:var(--ink);border:1px solid var(--border);
+  border-radius:6px;padding:2.5rem;
+  margin-top:3rem;
+  display:grid;grid-template-columns:1fr 2fr;gap:3rem;align-items:center;
+}
+.v-tag{
+  font-family:var(--mono);font-size:.65rem;color:var(--amber);
+  letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid rgba(255,193,7,.2);background:rgba(255,193,7,.06);
+  padding:.3rem .75rem;border-radius:2px;display:inline-block;margin-bottom:1rem;
+}
+.v-title{font-family:var(--cond);font-weight:800;font-size:2rem;text-transform:uppercase;color:#fff;line-height:1;margin-bottom:.75rem}
+.v-desc{font-size:.9rem;color:var(--muted2);line-height:1.75;font-weight:300}
+.v-reasons{display:flex;flex-direction:column;gap:.5rem;margin-top:1.5rem}
+.v-reason{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.65rem 1rem;
+  background:var(--ink2);border:1px solid var(--border);border-radius:3px;
+  font-size:.85rem;color:var(--paper2);
+}
+.v-ico{font-size:.95rem;flex-shrink:0}
+
+/* ── PRICING ── */
+.pricing-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1rem;margin-top:3.5rem;
+}
+.plan{
+  background:var(--ink);border:1px solid var(--border);
+  border-radius:6px;padding:2rem;position:relative;
+  transition:border-color .2s, transform .2s;
+}
+.plan:hover{border-color:rgba(0,230,118,.25);transform:translateY(-3px)}
+.plan.featured{border-color:var(--green)}
+.plan-badge{
+  position:absolute;top:-11px;left:1.5rem;
+  font-family:var(--cond);font-weight:700;font-size:.7rem;
+  letter-spacing:.1em;text-transform:uppercase;
+  background:var(--green);color:#000;
+  padding:.22rem .8rem;border-radius:2px;
+}
+.plan-name{font-family:var(--cond);font-weight:700;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);margin-bottom:.75rem}
+.plan-price{
+  font-family:var(--cond);font-weight:800;font-size:3rem;
+  color:#fff;line-height:1;letter-spacing:-.02em;
+}
+.plan-price sup{font-size:1.2rem;vertical-align:super}
+.plan-price sub{font-size:1rem;font-weight:400;color:var(--muted2)}
+.plan-cycle{font-size:.78rem;color:var(--muted);margin-top:.3rem;font-family:var(--mono)}
+.plan-setup{font-family:var(--mono);font-size:.72rem;color:var(--amber);margin:.75rem 0;padding:.4rem .7rem;background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.15);border-radius:2px;display:inline-block}
+.plan-div{height:1px;background:var(--border);margin:1.3rem 0}
+.plan-feats{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.8rem}
+.pf{display:flex;align-items:flex-start;gap:.6rem;font-size:.84rem;color:var(--muted2);font-weight:300}
+.pf::before{content:'→';color:var(--green);flex-shrink:0;font-family:var(--mono);font-size:.8rem;margin-top:.1rem}
+.pf.off{opacity:.3}
+.pf.off::before{content:'—';color:var(--muted)}
+.btn-plan{
+  width:100%;font-family:var(--cond);font-weight:700;font-size:.9rem;
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:.75rem;border-radius:3px;cursor:pointer;
+  transition:all .2s;font-family:var(--cond);
+}
+.btn-plan-main{background:var(--green);color:#000;border:none}
+.btn-plan-main:hover{background:#2df082}
+.btn-plan-ghost{background:transparent;color:var(--paper2);border:1px solid var(--border2)}
+.btn-plan-ghost:hover{border-color:rgba(0,230,118,.35);color:var(--green)}
+.plan-note{font-family:var(--mono);font-size:.7rem;color:var(--muted);text-align:center;margin-top:1.2rem;letter-spacing:.04em}
+
+/* ── ROADMAP ── */
+.roadmap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:3rem}
+.rq{background:var(--ink);border:1px solid var(--border);border-radius:6px;padding:1.5rem}
+.rq-label{font-family:var(--mono);font-size:.65rem;color:var(--green);letter-spacing:.1em;margin-bottom:.75rem}
+.rq-title{font-family:var(--cond);font-weight:700;font-size:1rem;text-transform:uppercase;color:#fff;margin-bottom:.75rem}
+.rq-items{display:flex;flex-direction:column;gap:.4rem}
+.rq-item{font-size:.8rem;color:var(--muted2);display:flex;align-items:flex-start;gap:.4rem;font-weight:300}
+.rq-item::before{content:'·';color:var(--green);flex-shrink:0}
+.rq.q1{border-color:rgba(0,230,118,.3)}
+
+/* ── CTA ── */
+.cta-section{
+  padding:7rem 5vw;text-align:center;
+  background:var(--ink2);border-top:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.cta-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:400px;pointer-events:none;
+  background:radial-gradient(ellipse,rgba(0,230,118,.07) 0%,transparent 65%);
+}
+.cta-section .sec-h{text-align:center;max-width:none}
+.cta-section .sec-p{margin:0 auto 2.5rem;text-align:center}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:2}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--ink);border-top:1px solid var(--border);
+  padding:2.5rem 5vw;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:1rem;
+}
+.foot-logo{font-family:var(--cond);font-weight:800;font-size:1.1rem;letter-spacing:.08em;text-transform:uppercase;color:#fff}
+.foot-logo span{color:var(--green)}
+.foot-links{display:flex;gap:1.5rem;list-style:none}
+.foot-links a{font-size:.78rem;color:var(--muted2);letter-spacing:.04em;transition:color .2s;text-transform:uppercase;font-weight:500}
+.foot-links a:hover{color:var(--paper)}
+.foot-copy{font-family:var(--mono);font-size:.65rem;color:var(--muted);letter-spacing:.06em}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1000px){
+  .hero-inner,.how-grid,.vertical-card{grid-template-columns:1fr}
+  .cmd-grid{grid-template-columns:1fr 1fr}
+  .pricing-grid,.roadmap-grid{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+}
+@media(max-width:600px){
+  .cmd-grid,.pricing-grid,.roadmap-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div>
+    <div class="logo">Man<span>do</span></div>
+    <div class="logo-tag">// Control remoto para tu operación</div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#comandos">Comandos</a></li>
+    <li><a href="#como-funciona">Cómo funciona</a></li>
+    <li><a href="#precios">Precios</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="#" class="btn-ghost-sm">Ingresar</a>
+    <a href="#precios" class="btn-main-sm">Piloto 30 días</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-noise"></div>
+  <div class="hero-grid-lines"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-tag"><div class="status-dot"></div>SMS · Sin app · Sin internet</div>
+      <h1>
+        Operá tu negocio
+        <span class="accent"> con un mensaje.</span>
+        <span class="line2">El control remoto para tu operación.</span>
+      </h1>
+      <p class="hero-sub">
+        Tus vendedores consultan stock, tus choferes reportan llegada, vos aprobás pedidos — todo con un SMS. <strong>Sin apps, sin internet, sin fricción.</strong>
+      </p>
+      <div class="hero-btns">
+        <a href="#precios" class="btn-main">Arrancar piloto 30 días</a>
+        <a href="#comandos" class="btn-outline">Ver comandos</a>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="terminal">
+        <div class="term-bar">
+          <div class="td" style="background:#ff5f57"></div>
+          <div class="td" style="background:#febc2e"></div>
+          <div class="td" style="background:#28c840"></div>
+          <div class="term-label">Mando SMS · <span>sesión activa</span></div>
+        </div>
+        <div class="term-body">
+          <div class="sms-thread">
+
+            <div>
+              <div class="from-label">Vendedor – Juan (cel. registrado)</div>
+              <div class="sms-out">
+                <div class="sms-cmd">STOCK YERBA</div>
+                <div class="sms-meta">10:14 ✓✓</div>
+              </div>
+            </div>
+            <div class="sms-in">
+              <div class="sms-resp"><b>📦 Yerba Mate 1kg</b><br>Stock: <b>42 uds.</b> · Depósito Central<br>Vendidas hoy: 8 · Umbral: 15 uds.<br><span class="amber">⚠ Próximo a reponer</span></div>
+              <div class="sms-meta">10:14</div>
+            </div>
+
+            <div style="margin-top:.4rem">
+              <div class="from-label">Chofer – Ramiro</div>
+              <div class="sms-out">
+                <div class="sms-cmd">LLEGUE CLIENTE23</div>
+                <div class="sms-meta">10:31 ✓✓</div>
+              </div>
+            </div>
+            <div class="sms-in">
+              <div class="sms-resp">✅ Llegada registrada.<br>Cliente: <b>Distribuidora Núñez</b><br>Pedido <b>#1942</b> pendiente de entrega.</div>
+              <div class="sms-meta">10:31</div>
+            </div>
+
+            <div style="margin-top:.4rem">
+              <div class="from-label">Encargado – Vos</div>
+              <div class="sms-out">
+                <div class="sms-cmd">APRUEBO 1942</div>
+                <div class="sms-meta">10:33 ✓✓</div>
+              </div>
+            </div>
+            <div class="sms-in">
+              <div class="sms-resp">✅ Pedido <b>#1942 aprobado.</b><br>Ramiro notificado. Stock descontado.<br><b>Auditoría guardada.</b></div>
+              <div class="sms-meta">10:33</div>
+            </div>
+
+            <div class="typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="tagline-band">
+  <div class="marquee">
+    <span class="marquee-item">Sin app<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Sin internet<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Auditoría completa<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Permisos por rol<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Córdoba · Argentina<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Setup en 24hs<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Precio en USD<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Funciona con cualquier chip<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Sin app<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Sin internet<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Auditoría completa<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Permisos por rol<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Córdoba · Argentina<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Setup en 24hs<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Precio en USD<span class="marquee-sep">✦</span></span>
+    <span class="marquee-item">Funciona con cualquier chip<span class="marquee-sep">✦</span></span>
+  </div>
+</div>
+
+<!-- COMANDOS -->
+<section class="sec-full" id="comandos">
+  <div class="sec-inner">
+    <div class="reveal">
+      <div class="sec-tag">Comandos MVP</div>
+      <h2 class="sec-h">Seis comandos.<br><em>Todo lo que necesitás.</em></h2>
+      <p class="sec-p">Tu equipo ya sabe mandar mensajes. Solo tiene que aprender el formato. Eso es todo.</p>
+    </div>
+    <div class="cmd-grid reveal">
+      <div class="cmd-card">
+        <div class="cmd-name">STOCK <span class="cmd-arg">[producto]</span></div>
+        <div class="cmd-desc">Consulta el stock en tiempo real de cualquier producto registrado. Responde con unidades disponibles, vendidas y alerta si está cerca del mínimo.</div>
+        <div class="cmd-example">STOCK YERBA<br><span class="cmd-resp">→ Yerba Mate 1kg: <b>42 uds.</b> · ⚠ Próximo a reponer</span></div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">VENTA <span class="cmd-arg">[sku] [cant]</span></div>
+        <div class="cmd-desc">Registra una venta y descuenta el stock automáticamente. Queda guardado con timestamp, usuario y auditoría completa.</div>
+        <div class="cmd-example">VENTA YERBA 5<br><span class="cmd-resp">→ ✅ 5 uds. descontadas. Stock nuevo: <b>37</b></span></div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">LLEGUE <span class="cmd-arg">[cliente]</span></div>
+        <div class="cmd-desc">El chofer reporta su llegada a destino. El sistema registra la hora, notifica al encargado y habilita la descarga del pedido.</div>
+        <div class="cmd-example">LLEGUE CLIENTE23<br><span class="cmd-resp">→ ✅ Llegada registrada. Pedido #1942 listo.</span></div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">STATUS <span class="cmd-arg">[pedido]</span></div>
+        <div class="cmd-desc">Consulta el estado actual de un pedido: pendiente, en camino, entregado o con incidencia. Visible para todos los roles autorizados.</div>
+        <div class="cmd-example">STATUS 1942<br><span class="cmd-resp">→ Pedido #1942: <b>En camino</b> · Ramiro · 10:31hs</span></div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">APRUEBO <span class="cmd-arg">[id]</span></div>
+        <div class="cmd-desc">Solo los roles con permiso de aprobación pueden ejecutar este comando. Activa el workflow y notifica a quien corresponda.</div>
+        <div class="cmd-example">APRUEBO 1942<br><span class="cmd-resp">→ ✅ #1942 aprobado. Ramiro notificado.</span></div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">AYUDA</div>
+        <div class="cmd-desc">Devuelve la lista de comandos disponibles para el rol del usuario que pregunta. Cada empleado ve solo lo que puede hacer.</div>
+        <div class="cmd-example">AYUDA<br><span class="cmd-resp">→ Tus comandos: STOCK · VENTA · STATUS</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CÓMO FUNCIONA -->
+<div id="como-funciona" class="section">
+  <div class="how-grid">
+    <div class="reveal">
+      <div class="sec-tag">Cómo funciona</div>
+      <h2 class="sec-h">Cinco pasos.<br><em>Automatización real.</em></h2>
+      <p class="sec-p">Cada SMS que entra pasa por un pipeline que identifica, valida, ejecuta, responde y registra. Sin intervención humana.</p>
+      <div class="flow-steps">
+        <div class="flow-step active">
+          <div class="step-n">1</div>
+          <div>
+            <div class="step-title">Recibe el SMS</div>
+            <div class="step-desc">Tu número Mando recibe el mensaje. Funciona con Twilio, MessageBird o proveedor SMS local.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-n">2</div>
+          <div>
+            <div class="step-title">Identifica al remitente</div>
+            <div class="step-desc">El número de celular se cruza con los usuarios registrados. Si no está en el sistema, responde "No autorizado".</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-n">3</div>
+          <div>
+            <div class="step-title">Valida permisos</div>
+            <div class="step-desc">Cada usuario tiene un rol (vendedor, chofer, encargado, admin). El comando se ejecuta solo si el rol lo permite.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-n">4</div>
+          <div>
+            <div class="step-title">Ejecuta el workflow</div>
+            <div class="step-desc">Actualiza stock, registra movimiento, notifica a otros usuarios o dispara aprobaciones según el comando.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-n">5</div>
+          <div>
+            <div class="step-title">Responde y registra</div>
+            <div class="step-desc">SMS de confirmación instantáneo. Auditoría completa con usuario, acción, timestamp e IP guardados.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flow-diagram reveal">
+      <div class="flow-title">// Pipeline por SMS entrante</div>
+      <div class="flow-node fn-sms">📱 SMS recibido → parser de comando</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-node fn-id">🔍 Identificar remitente por número</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-node fn-perm">🔐 Validar permisos del rol</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-node fn-exec">⚡ Ejecutar workflow del comando</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-node fn-resp">✅ SMS de respuesta automático</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-node fn-log">📋 Auditoría: usuario · acción · timestamp</div>
+
+      <div style="margin-top:1.5rem;padding:1rem;background:var(--ink3);border-radius:4px;border:1px solid var(--border)">
+        <div style="font-size:.65rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem">Ejemplo de log</div>
+        <div style="font-size:.72rem;color:var(--paper2);line-height:1.8">
+          <span style="color:var(--green)">2025-04-23 10:33:07</span><br>
+          user: Juan · +543516XXXXXX<br>
+          cmd: APRUEBO · id: 1942<br>
+          rol: encargado · result: OK<br>
+          <span style="color:var(--amber)">→ Stock actualizado · Notif enviada</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VERTICAL INICIAL -->
+<div class="sec-full">
+  <div class="sec-inner">
+    <div class="reveal">
+      <div class="sec-tag">Vertical inicial</div>
+      <h2 class="sec-h">Distribuidoras &amp; mayoristas<br><em>en Córdoba.</em></h2>
+    </div>
+    <div class="vertical-card reveal">
+      <div>
+        <div class="v-tag">Target MVP</div>
+        <div class="v-title">Distribuidoras / Mayoristas / Logística</div>
+        <div class="v-desc">Equipos móviles que hoy coordinan por llamadas y WhatsApp, sin auditoría, con errores y retrasos. Mando los conecta a la operación central con solo mandar un mensaje.</div>
+      </div>
+      <div class="v-reasons">
+        <div class="v-reason"><span class="v-ico">📦</span>Stock dinámico con alta rotación — consultas todo el tiempo</div>
+        <div class="v-reason"><span class="v-ico">🚛</span>Choferes fuera de zona de WiFi — SMS es el único canal confiable</div>
+        <div class="v-reason"><span class="v-ico">⚡</span>Decisiones rápidas que hoy se bloquean por aprobaciones lentas</div>
+        <div class="v-reason"><span class="v-ico">💰</span>Ticket SaaS viable — el dolor cuesta más que el producto</div>
+        <div class="v-reason"><span class="v-ico">🔗</span>Referidos naturales: contadores, consultores ERP, cámaras empresariales</div>
+        <div class="v-reason"><span class="v-ico">📋</span>AFIP y auditoría fiscal como gancho adicional</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<section id="precios" class="section">
+  <div class="reveal" style="text-align:center;max-width:700px;margin:0 auto 0">
+    <div class="sec-tag" style="justify-content:center">Precios</div>
+    <h2 class="sec-h" style="text-align:center">Sin letra chica.<br><em>Precio en USD, factura en ARS.</em></h2>
+    <p class="sec-p" style="margin:0 auto;text-align:center">Setup único + suscripción mensual. Piloto 30 días para los primeros clientes de Córdoba.</p>
+  </div>
+  <div class="pricing-grid">
+    <div class="plan reveal">
+      <div class="plan-name">Starter</div>
+      <div class="plan-price"><sup>$</sup>29<sub>/mes</sub></div>
+      <div class="plan-cycle">USD · hasta 5 usuarios</div>
+      <div class="plan-setup">Setup: USD 150</div>
+      <div class="plan-div"></div>
+      <div class="plan-feats">
+        <div class="pf">6 comandos MVP</div>
+        <div class="pf">1 número SMS</div>
+        <div class="pf">Hasta 5 usuarios registrados</div>
+        <div class="pf">Dashboard básico + logs</div>
+        <div class="pf">Soporte por email</div>
+        <div class="pf off">Roles y permisos custom</div>
+        <div class="pf off">Integraciones ERP</div>
+        <div class="pf off">Comandos custom</div>
+      </div>
+      <button class="btn-plan btn-plan-ghost">Piloto 30 días</button>
+    </div>
+    <div class="plan featured reveal">
+      <div class="plan-badge">Más elegido</div>
+      <div class="plan-name">Growth</div>
+      <div class="plan-price"><sup>$</sup>79<sub>/mes</sub></div>
+      <div class="plan-cycle">USD · hasta 20 usuarios</div>
+      <div class="plan-setup">Setup: USD 300</div>
+      <div class="plan-div"></div>
+      <div class="plan-feats">
+        <div class="pf">Todos los comandos MVP</div>
+        <div class="pf">2 números SMS</div>
+        <div class="pf">Hasta 20 usuarios</div>
+        <div class="pf">Roles y permisos por usuario</div>
+        <div class="pf">Dashboard completo + reportes</div>
+        <div class="pf">Confirmaciones dobles (acciones sensibles)</div>
+        <div class="pf">Soporte prioritario WhatsApp</div>
+        <div class="pf off">Integraciones ERP / Tango</div>
+      </div>
+      <button class="btn-plan btn-plan-main">Piloto 30 días</button>
+    </div>
+    <div class="plan reveal">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price"><sup>$</sup>199<sub>/mes</sub></div>
+      <div class="plan-cycle">USD · usuarios ilimitados</div>
+      <div class="plan-setup">Setup: USD 500</div>
+      <div class="plan-div"></div>
+      <div class="plan-feats">
+        <div class="pf">Todo de Growth incluido</div>
+        <div class="pf">Números SMS ilimitados</div>
+        <div class="pf">Usuarios ilimitados</div>
+        <div class="pf">Comandos custom por negocio</div>
+        <div class="pf">Integraciones ERP / Tango / Bejerman</div>
+        <div class="pf">API abierta para integradores</div>
+        <div class="pf">SLA + gerente de cuenta dedicado</div>
+      </div>
+      <button class="btn-plan btn-plan-ghost">Hablar con ventas</button>
+    </div>
+  </div>
+  <p class="plan-note" style="text-align:center;margin-top:1.5rem">Primeros 5 clientes de Córdoba: piloto 30 días + implementación + caso de éxito documentado</p>
+</section>
+
+<!-- ROADMAP -->
+<div class="sec-full">
+  <div class="sec-inner">
+    <div class="reveal">
+      <div class="sec-tag">Roadmap 12 meses</div>
+      <h2 class="sec-h">De MVP a <em>plataforma nacional.</em></h2>
+    </div>
+    <div class="roadmap-grid reveal">
+      <div class="rq q1">
+        <div class="rq-label">// Q1</div>
+        <div class="rq-title">MVP + 5 clientes pagos</div>
+        <div class="rq-items">
+          <div class="rq-item">Número SMS + webhook Node.js</div>
+          <div class="rq-item">Parser de 6 comandos fijos</div>
+          <div class="rq-item">Supabase + logs + usuarios</div>
+          <div class="rq-item">Dashboard web básico</div>
+          <div class="rq-item">5 pilotos pagos Córdoba</div>
+        </div>
+      </div>
+      <div class="rq">
+        <div class="rq-label">// Q2</div>
+        <div class="rq-title">Panel no-code + ERP</div>
+        <div class="rq-items">
+          <div class="rq-item">Configurador de comandos sin código</div>
+          <div class="rq-item">Integraciones Tango / Bejerman</div>
+          <div class="rq-item">Sistema de roles granular</div>
+          <div class="rq-item">Métricas y reportes avanzados</div>
+        </div>
+      </div>
+      <div class="rq">
+        <div class="rq-label">// Q3</div>
+        <div class="rq-title">IA + WhatsApp fallback</div>
+        <div class="rq-items">
+          <div class="rq-item">Comandos en lenguaje natural (IA)</div>
+          <div class="rq-item">Canal WhatsApp como alternativa</div>
+          <div class="rq-item">Predicción de stock con ML</div>
+          <div class="rq-item">Alertas proactivas automáticas</div>
+        </div>
+      </div>
+      <div class="rq">
+        <div class="rq-label">// Q4</div>
+        <div class="rq-title">Expansión Latam + partners</div>
+        <div class="rq-items">
+          <div class="rq-item">Canal de partners (consultores ERP)</div>
+          <div class="rq-item">Expansión: Rosario, CABA, Mendoza</div>
+          <div class="rq-item">Verticales: farmacéutica, agro</div>
+          <div class="rq-item">Producto white-label</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="reveal" style="position:relative;z-index:2">
+    <div class="sec-tag" style="justify-content:center">Próximos pasos</div>
+    <h2 class="sec-h">Cerramos 3 pilotos pagos<br><em>en los próximos 30 días.</em></h2>
+    <p class="sec-p">Implementación rápida. Caso de éxito documentado. Precio de piloto para los primeros clientes de Córdoba.</p>
+    <div class="cta-btns">
+      <a href="#" class="btn-main">Quiero ser piloto</a>
+      <a href="#" class="btn-outline">Hablar con el equipo</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-logo">Man<span>do</span></div>
+  <ul class="foot-links">
+    <li><a href="#">Términos</a></li>
+    <li><a href="#">Privacidad</a></li>
+    <li><a href="#">Docs</a></li>
+    <li><a href="#">Contacto</a></li>
+  </ul>
+  <div class="foot-copy">© 2025 Mando · Córdoba, Argentina</div>
+</footer>
+
+<script>
+const io = new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting){
+      const siblings = e.target.parentElement.querySelectorAll('.reveal')
+      const idx = Array.from(siblings).indexOf(e.target)
+      e.target.style.transitionDelay = (idx*80)+'ms'
+      e.target.classList.add('in')
+    }
+  })
+},{threshold:.1})
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el))
+window.addEventListener('scroll',()=>{
+  document.querySelector('nav').style.background=
+    window.scrollY>50?'rgba(10,12,15,0.97)':'rgba(10,12,15,0.93)'
+})
+</script>
+</body>
+</html>

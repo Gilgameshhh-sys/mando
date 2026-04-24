@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mando — Panel de Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#080b0f;--ink2:#0e1318;--ink3:#141b23;--ink4:#1a2230;
+  --paper:#eef1f5;--paper2:#c8d0db;
+  --green:#00e676;--green-dim:rgba(0,230,118,.12);--green-glow:rgba(0,230,118,.25);
+  --amber:#ffc107;--red:#ff4444;--blue:#4fc3f7;
+  --muted:#455468;--muted2:#6b7d93;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.11);
+  --mono:'Space Mono',monospace;--sans:'Barlow',sans-serif;--cond:'Barlow Condensed',sans-serif;
+  --sidebar:240px;
+}
+html{height:100%}
+body{font-family:var(--sans);background:var(--ink);color:var(--paper);height:100%;display:flex;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  background:var(--ink2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;height:100vh;position:sticky;top:0;
+}
+.sb-logo{
+  padding:1.5rem 1.4rem 1.2rem;
+  border-bottom:1px solid var(--border);
+}
+.logo-mark{font-family:var(--cond);font-weight:800;font-size:1.35rem;letter-spacing:.08em;text-transform:uppercase;color:#fff}
+.logo-mark span{color:var(--green)}
+.logo-sub{font-family:var(--mono);font-size:.55rem;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.sb-nav{flex:1;padding:1rem 0;overflow-y:auto}
+.nav-label{font-family:var(--mono);font-size:.55rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;padding:.8rem 1.4rem .4rem}
+.nav-item{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.6rem 1.4rem;font-size:.84rem;font-weight:500;
+  color:var(--muted2);cursor:pointer;transition:all .15s;
+  border-left:2px solid transparent;
+  user-select:none;
+}
+.nav-item:hover{color:var(--paper);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--green);border-left-color:var(--green);background:var(--green-dim)}
+.nav-ico{font-size:1rem;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;font-family:var(--mono);font-size:.6rem;background:var(--red);color:#fff;padding:.1rem .4rem;border-radius:10px}
+.sb-footer{padding:1rem 1.4rem;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:.7rem}
+.sb-avatar{width:30px;height:30px;border-radius:50%;background:var(--green-dim);border:1px solid var(--green-glow);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;color:var(--green)}
+.sb-name{font-size:.8rem;color:var(--paper2);font-weight:500}
+.sb-role{font-family:var(--mono);font-size:.58rem;color:var(--muted2)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 2rem;background:rgba(8,11,15,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);
+}
+.page-title{font-family:var(--cond);font-weight:700;font-size:1.2rem;letter-spacing:.04em;text-transform:uppercase;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:1rem}
+.status-pill{
+  display:flex;align-items:center;gap:.4rem;
+  font-family:var(--mono);font-size:.65rem;color:var(--green);
+  border:1px solid rgba(0,230,118,.2);background:var(--green-dim);
+  padding:.3rem .7rem;border-radius:20px;letter-spacing:.06em;
+}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.btn-sm{
+  font-family:var(--cond);font-weight:700;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:.38rem .9rem;border-radius:3px;cursor:pointer;border:none;transition:all .15s;
+}
+.btn-primary{background:var(--green);color:#000}
+.btn-primary:hover{background:#2df082}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--paper);border-color:var(--green)}
+
+/* ── CONTENT ── */
+.content{padding:2rem;flex:1}
+
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.kpi{
+  background:var(--ink2);border:1px solid var(--border);border-radius:6px;
+  padding:1.4rem 1.5rem;position:relative;overflow:hidden;
+  transition:border-color .2s;
+}
+.kpi:hover{border-color:var(--border2)}
+.kpi-label{font-family:var(--mono);font-size:.6rem;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.6rem}
+.kpi-val{font-family:var(--cond);font-weight:800;font-size:2.4rem;color:#fff;line-height:1;letter-spacing:-.02em}
+.kpi-val.green{color:var(--green)}
+.kpi-val.amber{color:var(--amber)}
+.kpi-val.red{color:var(--red)}
+.kpi-sub{font-size:.75rem;color:var(--muted2);margin-top:.4rem;font-weight:300}
+.kpi-trend{font-family:var(--mono);font-size:.65rem;margin-top:.5rem}
+.kpi-trend.up{color:var(--green)}
+.kpi-trend.down{color:var(--red)}
+.kpi-bar{position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--green-dim)}
+.kpi-bar-fill{height:100%;background:var(--green);transition:width 1s ease}
+
+/* ── PANELS ── */
+.panels{display:grid;grid-template-columns:1fr 380px;gap:1.5rem;margin-bottom:2rem}
+.panel{background:var(--ink2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.4rem;border-bottom:1px solid var(--border);
+}
+.panel-title{font-family:var(--cond);font-weight:700;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+.panel-tag{font-family:var(--mono);font-size:.6rem;color:var(--muted2);letter-spacing:.08em}
+
+/* ── LOG FEED ── */
+.log-feed{max-height:340px;overflow-y:auto}
+.log-entry{
+  display:grid;grid-template-columns:100px 90px 1fr auto;
+  gap:.75rem;align-items:center;
+  padding:.7rem 1.4rem;border-bottom:1px solid var(--border);
+  font-size:.8rem;transition:background .1s;
+}
+.log-entry:hover{background:rgba(255,255,255,.02)}
+.log-entry:last-child{border-bottom:none}
+.log-time{font-family:var(--mono);font-size:.65rem;color:var(--muted2)}
+.log-user{font-weight:500;color:var(--paper2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-cmd{font-family:var(--mono);font-size:.72rem;color:var(--green);font-weight:700}
+.log-result{font-size:.72rem;color:var(--muted2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.badge{font-family:var(--mono);font-size:.58rem;padding:.15rem .5rem;border-radius:2px;font-weight:700}
+.badge-ok{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.badge-err{background:rgba(255,68,68,.1);color:var(--red);border:1px solid rgba(255,68,68,.2)}
+.badge-warn{background:rgba(255,193,7,.08);color:var(--amber);border:1px solid rgba(255,193,7,.2)}
+
+/* ── SMS PREVIEW ── */
+.sms-preview{padding:1.2rem;display:flex;flex-direction:column;gap:.8rem;max-height:340px;overflow-y:auto}
+.sms-bubble{border-radius:10px;padding:.65rem .9rem;max-width:90%}
+.sms-out{align-self:flex-end;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px 10px 3px 10px}
+.sms-in{align-self:flex-start;background:var(--green-dim);border:1px solid rgba(0,230,118,.2);border-radius:10px 10px 10px 3px}
+.sms-from{font-family:var(--mono);font-size:.58rem;color:var(--muted2);margin-bottom:.25rem;letter-spacing:.06em}
+.sms-text{font-family:var(--mono);font-size:.75rem;line-height:1.55;color:var(--paper)}
+.sms-text .cmd{color:#fff;font-weight:700}
+.sms-text .hi{color:var(--green)}
+.sms-text .warn{color:var(--amber)}
+.sms-meta{font-size:.58rem;color:var(--muted);text-align:right;margin-top:.25rem}
+
+/* ── TABLE SECTION ── */
+.table-section{background:var(--ink2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:2rem}
+.table-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.4rem;border-bottom:1px solid var(--border);gap:1rem;
+}
+.search-input{
+  background:var(--ink3);border:1px solid var(--border2);border-radius:3px;
+  padding:.4rem .8rem;font-family:var(--mono);font-size:.75rem;color:var(--paper);
+  outline:none;width:220px;transition:border-color .2s;
+}
+.search-input:focus{border-color:var(--green)}
+.search-input::placeholder{color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th{
+  font-family:var(--mono);font-size:.6rem;color:var(--muted2);
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:.7rem 1.4rem;text-align:left;
+  background:var(--ink3);border-bottom:1px solid var(--border);
+}
+td{padding:.8rem 1.4rem;font-size:.82rem;color:var(--paper2);border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.role-badge{font-family:var(--mono);font-size:.6rem;padding:.18rem .6rem;border-radius:2px;text-transform:uppercase;letter-spacing:.05em}
+.role-admin{background:rgba(255,193,7,.1);color:var(--amber);border:1px solid rgba(255,193,7,.2)}
+.role-encargado{background:rgba(79,195,247,.1);color:var(--blue);border:1px solid rgba(79,195,247,.2)}
+.role-vendedor{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.role-chofer{background:rgba(255,255,255,.06);color:var(--paper2);border:1px solid var(--border2)}
+.role-operario{background:rgba(255,255,255,.04);color:var(--muted2);border:1px solid var(--border)}
+.active-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot-gray{background:var(--muted)}
+.action-btn{
+  font-family:var(--mono);font-size:.6rem;padding:.2rem .55rem;border-radius:2px;
+  cursor:pointer;border:1px solid var(--border2);background:transparent;
+  color:var(--muted2);transition:all .15s;
+}
+.action-btn:hover{border-color:var(--green);color:var(--green)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.tab{
+  font-family:var(--cond);font-weight:600;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;
+  padding:.7rem 1.4rem;cursor:pointer;color:var(--muted2);
+  border-bottom:2px solid transparent;transition:all .15s;
+}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+.tab:hover:not(.active){color:var(--paper2)}
+
+/* ── VIEWS ── */
+.view{display:none}
+.view.active{display:block}
+
+/* ── STOCK GRID ── */
+.stock-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:1.4rem}
+.stock-card{
+  background:var(--ink3);border:1px solid var(--border);border-radius:5px;
+  padding:1.1rem;transition:border-color .2s;
+}
+.stock-card:hover{border-color:var(--border2)}
+.stock-sku{font-family:var(--mono);font-size:.58rem;color:var(--muted2);letter-spacing:.1em;margin-bottom:.4rem}
+.stock-name{font-size:.88rem;font-weight:600;color:var(--paper);margin-bottom:.6rem}
+.stock-qty{font-family:var(--cond);font-weight:800;font-size:2rem;line-height:1;color:#fff}
+.stock-unit{font-size:.75rem;color:var(--muted2);margin-left:.3rem}
+.stock-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin:.6rem 0 .4rem}
+.stock-bar{height:100%;border-radius:2px;transition:width .6s ease}
+.stock-bar.ok{background:var(--green)}
+.stock-bar.warn{background:var(--amber)}
+.stock-bar.crit{background:var(--red)}
+.stock-footer{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted2)}
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
+  align-items:center;justify-content:center;backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--ink2);border:1px solid var(--border2);border-radius:8px;
+  padding:2rem;width:420px;max-width:90vw;
+  animation:modal-in .2s ease;
+}
+@keyframes modal-in{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-title{font-family:var(--cond);font-weight:700;font-size:1.1rem;text-transform:uppercase;color:#fff;margin-bottom:1.5rem}
+.form-group{margin-bottom:1rem}
+.form-label{font-family:var(--mono);font-size:.6rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem;display:block}
+.form-input,.form-select{
+  width:100%;background:var(--ink3);border:1px solid var(--border2);border-radius:3px;
+  padding:.55rem .8rem;font-family:var(--mono);font-size:.78rem;color:var(--paper);
+  outline:none;transition:border-color .2s;
+}
+.form-input:focus,.form-select:focus{border-color:var(--green)}
+.form-select option{background:var(--ink2)}
+.modal-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted2)}
+.empty-icon{font-size:2.5rem;margin-bottom:.75rem;opacity:.4}
+.empty-text{font-size:.85rem;font-weight:300}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:2rem;right:2rem;z-index:500;
+  background:var(--ink3);border:1px solid var(--green-glow);border-radius:5px;
+  padding:.8rem 1.2rem;font-family:var(--mono);font-size:.75rem;color:var(--green);
+  transform:translateY(100px);opacity:0;transition:all .3s ease;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-mark">Man<span>do</span></div>
+    <div class="logo-sub">// Panel de Control</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="setView('dashboard')">
+      <span class="nav-ico">⚡</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="setView('logs')">
+      <span class="nav-ico">📋</span> Auditoría
+      <span class="nav-badge" id="badge-logs">12</span>
+    </div>
+    <div class="nav-item" onclick="setView('sms-live')">
+      <span class="nav-ico">💬</span> SMS en vivo
+    </div>
+    <div class="nav-label">Configuración</div>
+    <div class="nav-item" onclick="setView('usuarios')">
+      <span class="nav-ico">👤</span> Usuarios
+    </div>
+    <div class="nav-item" onclick="setView('stock')">
+      <span class="nav-ico">📦</span> Inventario
+    </div>
+    <div class="nav-item" onclick="setView('comandos')">
+      <span class="nav-ico">⌨️</span> Comandos
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar">AD</div>
+      <div>
+        <div class="sb-name">Admin</div>
+        <div class="sb-role">// admin · Distribuidora SA</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <div class="status-pill"><div class="pulse"></div>Sistema activo</div>
+      <button class="btn-sm btn-primary" onclick="openModal('modal-user')">+ Usuario</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ═══ VIEW: DASHBOARD ═══ -->
+    <div class="view active" id="view-dashboard">
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Comandos hoy</div>
+          <div class="kpi-val green" id="kpi-cmd">47</div>
+          <div class="kpi-sub">Desde las 00:00hs</div>
+          <div class="kpi-trend up">↑ +23% vs ayer</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:78%"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Usuarios activos</div>
+          <div class="kpi-val" id="kpi-users">8</div>
+          <div class="kpi-sub">De 12 registrados</div>
+          <div class="kpi-trend up">↑ 2 online ahora</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:67%;background:var(--blue)"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Tasa de error</div>
+          <div class="kpi-val green" id="kpi-err">2.1%</div>
+          <div class="kpi-sub">Sobre 47 comandos</div>
+          <div class="kpi-trend up">↓ Bajo el objetivo 5%</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:21%;background:var(--green)"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Tiempo respuesta</div>
+          <div class="kpi-val green" id="kpi-resp">1.8s</div>
+          <div class="kpi-sub">Promedio hoy</div>
+          <div class="kpi-trend up">↓ Objetivo &lt;5s ✓</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:36%;background:var(--green)"></div></div>
+        </div>
+      </div>
+
+      <!-- Panels: log + sms preview -->
+      <div class="panels">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Actividad reciente</div>
+            <div class="panel-tag">// últimos 20 comandos</div>
+          </div>
+          <div class="log-feed" id="log-feed">
+            <!-- populated by JS -->
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">SMS en vivo</div>
+            <div class="panel-tag">// Twilio feed</div>
+          </div>
+          <div class="sms-preview" id="sms-preview">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ VIEW: LOGS / AUDITORÍA ═══ -->
+    <div class="view" id="view-logs">
+      <div class="table-section">
+        <div class="table-toolbar">
+          <div style="display:flex;gap:.75rem;align-items:center">
+            <input class="search-input" placeholder="Buscar usuario, comando..." oninput="filterLogs(this.value)">
+            <select class="search-input" style="width:140px" onchange="filterLogs()">
+              <option value="">Todos los roles</option>
+              <option>admin</option><option>encargado</option>
+              <option>vendedor</option><option>chofer</option>
+            </select>
+          </div>
+          <button class="btn-sm btn-ghost">⬇ Exportar CSV</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha / Hora</th><th>Usuario</th><th>Teléfono</th>
+              <th>Comando</th><th>Resultado</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="logs-tbody">
+            <!-- populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: SMS EN VIVO ═══ -->
+    <div class="view" id="view-sms-live">
+      <div class="panel" style="max-width:560px">
+        <div class="panel-head">
+          <div class="panel-title">Feed SMS</div>
+          <div class="status-pill"><div class="pulse"></div>Live</div>
+        </div>
+        <div class="sms-preview" id="sms-live-feed" style="max-height:520px">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: USUARIOS ═══ -->
+    <div class="view" id="view-usuarios">
+      <div class="table-section">
+        <div class="table-toolbar">
+          <input class="search-input" placeholder="Buscar nombre o teléfono...">
+          <button class="btn-sm btn-primary" onclick="openModal('modal-user')">+ Nuevo usuario</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Teléfono</th><th>Rol</th>
+              <th>Cmds hoy</th><th>Estado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <!-- populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: STOCK / INVENTARIO ═══ -->
+    <div class="view" id="view-stock">
+      <div class="table-section">
+        <div class="table-toolbar">
+          <input class="search-input" placeholder="Buscar producto o SKU...">
+          <button class="btn-sm btn-primary" onclick="openModal('modal-product')">+ Producto</button>
+        </div>
+        <div class="stock-grid" id="stock-grid">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: COMANDOS ═══ -->
+    <div class="view" id="view-comandos">
+      <div class="table-section">
+        <div class="panel-head" style="background:var(--ink3)">
+          <div class="panel-title">Comandos configurados</div>
+          <div class="panel-tag">// Parser regex · MVP</div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Comando</th><th>Formato</th><th>Roles</th><th>Confirmación</th><th>Usos hoy</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="font-family:var(--mono);color:var(--green);font-weight:700">STOCK</span></td>
+              <td><span style="font-family:var(--mono);font-size:.75rem">STOCK [producto]</span></td>
+              <td>admin · encargado · vendedor · operario</td>
+              <td><span class="badge badge-ok">No</span></td><td>18</td>
+            </tr>
+            <tr>
+              <td><span style="font-family:var(--mono);color:var(--green);font-weight:700">VENTA</span></td>
+              <td><span style="font-family:var(--mono);font-size:.75rem">VENTA [sku] [cant]</span></td>
+              <td>admin · encargado · vendedor</td>
+              <td><span class="badge badge-warn">Sí — CONFIRMAR</span></td><td>11</td>
+            </tr>
+            <tr>
+              <td><span style="font-family:var(--mono);color:var(--green);font-weight:700">LLEGUE</span></td>
+              <td><span style="font-family:var(--mono);font-size:.75rem">LLEGUE [cliente]</span></td>
+              <td>admin · encargado · chofer</td>
+              <td><span class="badge badge-ok">No</span></td><td>6</td>
+            </tr>
+            <tr>
+              <td><span style="font-family:var(--mono);color:var(--green);font-weight:700">STATUS</span></td>
+              <td><span style="font-family:var(--mono);font-size:.75rem">STATUS [pedido]</span></td>
+              <td>Todos</td>
+              <td><span class="badge badge-ok">No</span></td><td>8</td>
+            </tr>
+            <tr>
+              <td><span style="font-family:var(--mono);color:var(--green);font-weight:700">APRUEBO</span></td>
+              <td><span style="font-family:var(--mono);font-size:.75rem">APRUEBO [pedido]</span></td>
+              <td>admin · encargado</td>
+              <td><span class="badge badge-warn">Sí — escribe en BD</span></td><td>4</td>
+            </tr>
+            <tr>
+              <td><span style="font-family:var(--mono);color:var(--green);font-weight:700">AYUDA</span></td>
+              <td><span style="font-family:var(--mono);font-size:.75rem">AYUDA</span></td>
+              <td>Todos</td>
+              <td><span class="badge badge-ok">No</span></td><td>2</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ── MODAL: NUEVO USUARIO ── -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Nuevo usuario</div>
+    <div class="form-group">
+      <label class="form-label">Nombre completo</label>
+      <input class="form-input" placeholder="Juan Pérez">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Teléfono (E.164)</label>
+      <input class="form-input" placeholder="+5493512345678">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rol</label>
+      <select class="form-select">
+        <option>vendedor</option>
+        <option>chofer</option>
+        <option>operario</option>
+        <option>encargado</option>
+        <option>admin</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-ghost" onclick="closeModal('modal-user')">Cancelar</button>
+      <button class="btn-sm btn-primary" onclick="saveUser()">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: NUEVO PRODUCTO ── -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Nuevo producto</div>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" placeholder="Yerba Mate 1kg">
+    </div>
+    <div class="form-group">
+      <label class="form-label">SKU</label>
+      <input class="form-input" placeholder="YERBA-1KG">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Aliases (para búsqueda por SMS)</label>
+      <input class="form-input" placeholder="yerba, mate, amanda">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+      <div class="form-group">
+        <label class="form-label">Stock inicial</label>
+        <input class="form-input" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock mínimo</label>
+        <input class="form-input" type="number" placeholder="10">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Unidad</label>
+      <select class="form-select">
+        <option>uds</option><option>kg</option><option>lt</option><option>cajas</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-ghost" onclick="closeModal('modal-product')">Cancelar</button>
+      <button class="btn-sm btn-primary" onclick="saveProduct()">Guardar producto</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATOS DEMO ──────────────────────────────────────────────
+const USERS_DEMO = [
+  { name:'Juan Rodríguez', phone:'+5493511111111', role:'vendedor', cmds:18, active:true },
+  { name:'Ramiro Suárez',  phone:'+5493522222222', role:'chofer',   cmds:9,  active:true },
+  { name:'María López',    phone:'+5493533333333', role:'encargado',cmds:12, active:true },
+  { name:'Carlos Díaz',    phone:'+5493544444444', role:'operario', cmds:5,  active:false},
+  { name:'Admin',          phone:'+5493500000000', role:'admin',    cmds:3,  active:true },
+];
+
+const LOGS_DEMO = [
+  { ts:'10:33:07', user:'María López',   phone:'+54935...333', cmd:'APRUEBO 1942', result:'#1942 aprobado', ok:true },
+  { ts:'10:31:44', user:'Ramiro Suárez', phone:'+54935...222', cmd:'LLEGUE CLIENTE23', result:'Llegada OK', ok:true },
+  { ts:'10:28:12', user:'Juan Rodríguez',phone:'+54935...111', cmd:'VENTA YERBA 5', result:'Stock→37uds', ok:true },
+  { ts:'10:25:03', user:'Juan Rodríguez',phone:'+54935...111', cmd:'CONFIRMAR', result:'Venta registrada', ok:true },
+  { ts:'10:21:55', user:'Desconocido',   phone:'+54935...999', cmd:'STOCK MATE', result:'No autorizado', ok:false },
+  { ts:'10:18:30', user:'Carlos Díaz',   phone:'+54935...444', cmd:'STATUS 1940', result:'Entregado ✅', ok:true },
+  { ts:'10:14:07', user:'Juan Rodríguez',phone:'+54935...111', cmd:'STOCK YERBA', result:'42 uds.', ok:true },
+  { ts:'09:58:22', user:'Ramiro Suárez', phone:'+54935...222', cmd:'LLEGUE CLIENTE18', result:'Cliente no encontrado', ok:false },
+  { ts:'09:45:10', user:'María López',   phone:'+54935...333', cmd:'AYUDA', result:'Menú enviado', ok:true },
+  { ts:'09:30:00', user:'Admin',         phone:'+54935...000', cmd:'STOCK AZUCAR', result:'80 uds.', ok:true },
+];
+
+const STOCK_DEMO = [
+  { name:'Yerba Mate 1kg', sku:'YERBA-1KG', qty:37, min:15, unit:'uds', loc:'Depósito A' },
+  { name:'Azúcar 1kg',     sku:'AZUCAR-1KG',qty:80, min:20, unit:'uds', loc:'Depósito A' },
+  { name:'Aceite 1lt',     sku:'ACEITE-1LT',qty:12, min:10, unit:'uds', loc:'Depósito B' },
+  { name:'Arroz 1kg',      sku:'ARROZ-1KG', qty:5,  min:15, unit:'uds', loc:'Depósito A' },
+  { name:'Sal 1kg',        sku:'SAL-1KG',   qty:60, min:10, unit:'uds', loc:'Estante C2' },
+  { name:'Fideos 500g',    sku:'FIDEO-500G',qty:45, min:20, unit:'uds', loc:'Estante C3' },
+];
+
+const SMS_DEMO = [
+  { dir:'out', from:'Juan (vendedor)', text:'<span class="cmd">STOCK YERBA</span>', ts:'10:14' },
+  { dir:'in',  from:'Mando',           text:'📦 Yerba Mate 1kg\nStock: <span class="hi">42 uds.</span> · Depósito A\nVendidas hoy: 8 · Mín: 15\n<span class="warn">⚠ Próximo a reponer</span>', ts:'10:14' },
+  { dir:'out', from:'Ramiro (chofer)', text:'<span class="cmd">LLEGUE CLIENTE23</span>', ts:'10:31' },
+  { dir:'in',  from:'Mando',           text:'✅ Llegada registrada — 10:31\nCliente: <span class="hi">Distribuidora Núñez</span>\nPedido #1942 pendiente de entrega.', ts:'10:31' },
+  { dir:'out', from:'María (encargado)',text:'<span class="cmd">APRUEBO 1942</span>', ts:'10:33' },
+  { dir:'in',  from:'Mando',           text:'✅ Pedido <span class="hi">#1942 aprobado</span> — 10:33\nRamiro fue notificado.\nAuditoría guardada.', ts:'10:33' },
+];
+
+// ── RENDER FUNCIONES ────────────────────────────────────────
+
+function renderLogFeed() {
+  const el = document.getElementById('log-feed');
+  el.innerHTML = LOGS_DEMO.map(l => `
+    <div class="log-entry">
+      <span class="log-time">${l.ts}</span>
+      <span class="log-user">${l.user}</span>
+      <span class="log-cmd">${l.cmd}</span>
+      <span class="badge ${l.ok ? 'badge-ok':'badge-err'}">${l.ok?'OK':'ERR'}</span>
+    </div>`).join('');
+}
+
+function renderLogTable() {
+  const tbody = document.getElementById('logs-tbody');
+  tbody.innerHTML = LOGS_DEMO.map(l => `
+    <tr>
+      <td style="font-family:var(--mono);font-size:.72rem">2026-04-24 ${l.ts}</td>
+      <td>${l.user}</td>
+      <td style="font-family:var(--mono);font-size:.7rem">${l.phone}</td>
+      <td><span style="font-family:var(--mono);color:var(--green);font-size:.75rem;font-weight:700">${l.cmd}</span></td>
+      <td style="font-size:.75rem;color:var(--muted2)">${l.result}</td>
+      <td><span class="badge ${l.ok?'badge-ok':'badge-err'}">${l.ok?'OK':'ERROR'}</span></td>
+    </tr>`).join('');
+}
+
+function renderSmsPreview(containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = SMS_DEMO.map(s => `
+    <div>
+      ${s.dir==='out' ? `<div class="sms-from">${s.from}</div>` : ''}
+      <div class="sms-bubble ${s.dir==='out'?'sms-out':'sms-in'}">
+        <div class="sms-text" style="white-space:pre-line">${s.text}</div>
+        <div class="sms-meta">${s.ts} ${s.dir==='out'?'✓✓':''}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderUsers() {
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = USERS_DEMO.map(u => `
+    <tr>
+      <td style="font-weight:500">${u.name}</td>
+      <td style="font-family:var(--mono);font-size:.72rem">${u.phone}</td>
+      <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+      <td style="font-family:var(--mono);font-size:.78rem">${u.cmds}</td>
+      <td><span class="active-dot ${u.active?'dot-green':'dot-gray'}"></span></td>
+      <td>
+        <button class="action-btn" onclick="toast('Editando ${u.name}...')">editar</button>
+        <button class="action-btn" style="margin-left:.3rem;color:var(--red);border-color:rgba(255,68,68,.2)"
+                onclick="toast('${u.active?'Usuario desactivado':'Usuario activado'}')">
+          ${u.active?'desactivar':'activar'}
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+function renderStock() {
+  const grid = document.getElementById('stock-grid');
+  grid.innerHTML = STOCK_DEMO.map(p => {
+    const pct = Math.min(100, Math.round((p.qty / (p.min * 4)) * 100));
+    const cls = p.qty <= p.min ? 'crit' : p.qty <= p.min * 2 ? 'warn' : 'ok';
+    return `
+    <div class="stock-card">
+      <div class="stock-sku">${p.sku}</div>
+      <div class="stock-name">${p.name}</div>
+      <div><span class="stock-qty">${p.qty}</span><span class="stock-unit">${p.unit}</span></div>
+      <div class="stock-bar-wrap"><div class="stock-bar ${cls}" style="width:${pct}%"></div></div>
+      <div class="stock-footer">
+        <span>Mín: ${p.min}</span>
+        <span>${p.loc}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── NAV / VIEWS ────────────────────────────────────────────
+
+const VIEW_TITLES = {
+  dashboard:'Dashboard', logs:'Auditoría de Comandos', 'sms-live':'SMS en Vivo',
+  usuarios:'Usuarios', stock:'Inventario', comandos:'Comandos'
+};
+
+function setView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`view-${id}`).classList.add('active');
+  document.querySelector(`[onclick="setView('${id}')"]`).classList.add('active');
+  document.getElementById('page-title').textContent = VIEW_TITLES[id] || id;
+  if (id === 'logs') renderLogTable();
+  if (id === 'sms-live') renderSmsPreview('sms-live-feed');
+}
+
+// ── MODALS ──────────────────────────────────────────────────
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', () => m.classList.remove('open'));
+});
+
+function saveUser() {
+  closeModal('modal-user');
+  toast('Usuario creado correctamente ✓');
+}
+function saveProduct() {
+  closeModal('modal-product');
+  toast('Producto guardado correctamente ✓');
+}
+
+// ── TOAST ───────────────────────────────────────────────────
+
+function toast(msg, duration = 2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ── FILTRO LOGS ─────────────────────────────────────────────
+
+function filterLogs(q) { /* TODO: filtrado real contra Supabase */ }
+
+// ── INIT ────────────────────────────────────────────────────
+
+renderLogFeed();
+renderSmsPreview('sms-preview');
+renderUsers();
+renderStock();
+
+// Simula contador de badge en tiempo real
+setInterval(() => {
+  const b = document.getElementById('badge-logs');
+  const n = parseInt(b.textContent) + 1;
+  b.textContent = n;
+  document.getElementById('kpi-cmd').textContent = 47 + (n - 12);
+}, 18000);
+</script>
+</body>
+</html>

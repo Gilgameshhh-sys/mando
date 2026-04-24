@@ -18,15 +18,15 @@ const config = {
   },
 
   twilio: {
-    accountSid: required('TWILIO_ACCOUNT_SID'),
-    authToken: required('TWILIO_AUTH_TOKEN'),
-    phoneNumber: required('TWILIO_PHONE_NUMBER'),
+    accountSid: required('ACb6ff975da9f9b9c2358a1c47b8a6c4c3'),
+    authToken: required('cabe6676af91c6eec06c2af36ed7b48b'),
+    phoneNumber: required('+12292182031'),
     validateSignature: process.env.VALIDATE_TWILIO_SIGNATURE !== 'false',
   },
 
   supabase: {
-    url: required('SUPABASE_URL'),
-    serviceKey: required('SUPABASE_SERVICE_KEY'),
+    url: required('https://fbzhqleztfyjmelhqxnu.supabase.co'),
+    serviceKey: required('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiemhxbGV6dGZ5am1lbGhxeG51Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzA1OTI4MCwiZXhwIjoyMDkyNjM1MjgwfQ.nnUsnYiS_faBM6IcohgfJZtGxk2aE7RHdkDUxxQ_A68'),
   },
 
   admin: {
